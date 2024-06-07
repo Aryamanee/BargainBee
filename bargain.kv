@@ -1,0 +1,8 @@
+#:kivy 2.3.0
+
+<Screen>:
+    Button:
+        size: 400,200
+        pos: root.width/2-200, root.height/2-100
+        text: "Hello World"
+        on_press: print(root.client.get_account(46))
