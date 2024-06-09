@@ -1,5 +1,16 @@
+from kivy.config import Config
+
+Config.set("graphics", "resizable", "1")
+Config.set("graphics", "width", "360")
+Config.set("graphics", "height", "640")
+
 import requests
 from kivy.app import App, Widget
+from kivy.lang import Builder
+from kivy.uix.screenmanager import ScreenManager, Screen
+import plyer
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 
 
 class Client:
@@ -121,13 +132,42 @@ class Client:
                 return resp.json()
 
 
-class Screen(Widget):
-    client = Client("127.0.0.1:8000")
+class LogInScreen(Screen):
+    pass
+
+
+class SignUpScreen(Screen):
+    pass
+
+
+class WindowManager(ScreenManager):
+    pass
 
 
 class BargainApp(App):
+    client = Client("localhost:8000")
+
     def build(self):
-        return Screen()
+        return Builder.load_file("bargain.kv")
+
+    def login(self):
+        loginstat = self.client.login(
+            self.root.get_screen("login").ids.login_username_input.text,
+            self.root.get_screen("login").ids.login_password_input.text,
+        )
+        print(loginstat)
+        if loginstat["username"]:
+            if loginstat["password"]:
+                Popup(
+                    title="Succesful Login!",
+                    content=Label(text="Successful Login!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+
+    def choose_file(self):
+
+        print(plyer.filechooser.open_file())
 
 
 app = BargainApp()

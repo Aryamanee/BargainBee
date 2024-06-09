@@ -1,8 +1,62 @@
 #:kivy 2.3.0
 
-<Screen>:
-    Button:
-        size: 400,200
-        pos: root.width/2-200, root.height/2-100
-        text: "Hello World"
-        on_press: print(root.client.get_account(46))
+WindowManager:
+    LogInScreen:
+    SignUpScreen:
+
+<LogInScreen>:
+    name: "login"
+    GridLayout:
+        rows: 2
+        cols: 2
+        padding : root.height/19.2
+        spacing : 3*root.height/192
+        TextInput:
+            multiline: False
+            hint_text: "Username"
+            id: login_username_input
+        TextInput:
+            multiline: False
+            hint_text: "Password"
+            password: True
+            id: login_password_input
+        Button:
+            text: "Log In"
+            on_release: app.login()
+        Button:
+            text: "Sign Up"
+            on_release: 
+                app.root.current = "signup"
+                root.manager.transition.direction = "left"
+
+<SignUpScreen>:
+    name: "signup"
+    GridLayout:
+        rows: 2
+        cols: 3
+        padding : root.height/19.2
+        spacing : 3*root.height/192
+        TextInput:
+            multiline: False
+            hint_text: "Name"
+            id: signup_name_input
+        TextInput:
+            multiline: False
+            hint_text: "Username"
+            id: signup_username_input
+        TextInput:
+            multiline: False
+            hint_text: "Password"
+            password: True
+            id: signup_password_input
+        Button:
+            text: "Log In"
+            on_release: print(app.client)
+        Button:
+            text: "Sign Up"
+            on_release: 
+                app.root.current = "signup"
+                root.manager.transition.direction = "left"
+        Button:
+            text: "Chose File"
+            on_release: app.choose_file()
