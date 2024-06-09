@@ -8,55 +8,74 @@ WindowManager:
     name: "login"
     GridLayout:
         rows: 2
-        cols: 2
-        padding : root.height/19.2
-        spacing : 3*root.height/192
-        TextInput:
-            multiline: False
-            hint_text: "Username"
-            id: login_username_input
-        TextInput:
-            multiline: False
-            hint_text: "Password"
-            password: True
-            id: login_password_input
-        Button:
+        cols: 1
+        Label:
             text: "Log In"
-            on_release: app.login()
-        Button:
-            text: "Sign Up"
-            on_release: 
-                app.root.current = "signup"
-                root.manager.transition.direction = "left"
+        GridLayout:
+            rows: 2
+            cols: 2
+            padding : root.height/19.2
+            spacing : 3*root.height/192
+            TextInput:
+                multiline: False
+                hint_text: "Username"
+                id: login_username_input
+            TextInput:
+                multiline: False
+                hint_text: "Password"
+                password: True
+                id: login_password_input
+            Button:
+                text: "Log In"
+                on_release: app.login()
+            Button:
+                text: "Sign Up"
+                on_release: 
+                    app.root.current = "signup"
+                    root.manager.transition.direction = "left"
 
 <SignUpScreen>:
     name: "signup"
     GridLayout:
-        rows: 2
-        cols: 3
-        padding : root.height/19.2
-        spacing : 3*root.height/192
-        TextInput:
-            multiline: False
-            hint_text: "Name"
-            id: signup_name_input
-        TextInput:
-            multiline: False
-            hint_text: "Username"
-            id: signup_username_input
-        TextInput:
-            multiline: False
-            hint_text: "Password"
-            password: True
-            id: signup_password_input
-        Button:
-            text: "Log In"
-            on_release: print(app.client)
-        Button:
+        rows: 3
+        cols: 1
+        Label:
             text: "Sign Up"
-            on_release: 
-                app.root.current = "signup"
-                root.manager.transition.direction = "left"
-        Button:
-            text: "Chose File"
-            on_release: app.choose_file()
+        GridLayout:
+            rows: 1
+            cols: 2
+            Label:
+                text: "Selected PFP:"
+            Image:
+                id: selected_pfp_signup
+                source: "img/placeholder.png"
+                fit_mode: "fill"
+        GridLayout:
+            rows: 2
+            cols: 3
+            padding : root.height/19.2
+            spacing : 3*root.height/192
+            TextInput:
+                multiline: False
+                hint_text: "Name"
+                id: signup_name_input
+            TextInput:
+                multiline: False
+                hint_text: "Username"
+                id: signup_username_input
+            TextInput:
+                multiline: False
+                hint_text: "Password"
+                password: True
+                id: signup_password_input
+            Button:
+                text: "Log In"
+                on_release: 
+                    app.root.current = "login"
+                    root.manager.transition.direction = "right"
+            Button:
+                text: "Sign Up"
+                on_release: pass
+            Button:
+                text: "Chose PFP"
+                on_release: app.choose_pfp()

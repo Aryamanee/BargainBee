@@ -164,10 +164,24 @@ class BargainApp(App):
                     size_hint=(None, None),
                     size=(400, 400),
                 ).open()
+            else:
+                Popup(
+                    title="Incorrect Password!",
+                    content=Label(text="Incorrect Password!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+        else:
+            Popup(
+                title="Login Error!",
+                content=Label(text="Incorrect Username or Login Error!"),
+                size_hint=(None, None),
+                size=(400, 400),
+            ).open()
 
-    def choose_file(self):
-
-        print(plyer.filechooser.open_file())
+    def choose_pfp(self):
+        filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
+        self.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
 
 
 app = BargainApp()
