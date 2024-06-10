@@ -3,6 +3,7 @@
 WindowManager:
     LogInScreen:
     SignUpScreen:
+    AccountPage:
 
 <LogInScreen>:
     name: "login"
@@ -14,8 +15,6 @@ WindowManager:
         GridLayout:
             rows: 2
             cols: 2
-            padding : root.height/19.2
-            spacing : 3*root.height/192
             TextInput:
                 multiline: False
                 hint_text: "Username"
@@ -53,8 +52,6 @@ WindowManager:
         GridLayout:
             rows: 2
             cols: 3
-            padding : root.height/19.2
-            spacing : 3*root.height/192
             TextInput:
                 multiline: False
                 hint_text: "Name"
@@ -75,7 +72,32 @@ WindowManager:
                     root.manager.transition.direction = "right"
             Button:
                 text: "Sign Up"
-                on_release: pass
+                on_release: app.signup()
             Button:
                 text: "Chose PFP"
                 on_release: app.choose_pfp()
+
+<AccountPage>:
+    name: "accountpage"
+    GridLayout:
+        rows: 8
+        cols: 2
+        Label:
+            id: hello_text
+        Image:
+            source: "img/cpfp.png"
+            fit_mode: "fill"
+            id: pfp
+        Button:
+            text: "Explore Page"
+        Button:
+            text: "Set PFP"
+            on_release: app.set_pfp()
+        Button:
+            text: "See My Listings"
+        Button:
+            text: "Add Listing"
+        Button:
+            text: "See Basket"
+        Button:
+            text: "See Messages"

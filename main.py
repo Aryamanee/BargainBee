@@ -140,12 +140,17 @@ class SignUpScreen(Screen):
     pass
 
 
+class AccountPage(Screen):
+    pass
+
+
 class WindowManager(ScreenManager):
     pass
 
 
 class BargainApp(App):
     client = Client("localhost:8000")
+    account = None
 
     def build(self):
         return Builder.load_file("bargain.kv")
@@ -155,15 +160,20 @@ class BargainApp(App):
             self.root.get_screen("login").ids.login_username_input.text,
             self.root.get_screen("login").ids.login_password_input.text,
         )
-        print(loginstat)
         if loginstat["username"]:
             if loginstat["password"]:
-                Popup(
-                    title="Succesful Login!",
-                    content=Label(text="Successful Login!"),
-                    size_hint=(None, None),
-                    size=(400, 400),
-                ).open()
+                app.account = app.client.get_account_by_username(
+                    self.root.get_screen("login").ids.login_username_input.text
+                )
+                curr_pfp = open("img/cpfp.png", "wb")
+                curr_pfp.write(app.client.get_pfp(app.account["UID"]))
+                curr_pfp.close()
+                self.root.get_screen("accountpage").ids.hello_text.text = (
+                    "Hello, " + app.account["name"].split(" ")[0] + "!"
+                )
+                self.root.get_screen("accountpage").ids.pfp.reload()
+                app.root.current = "accountpage"
+                self.root.get_screen("login").manager.transition.direction = "up"
             else:
                 Popup(
                     title="Incorrect Password!",
@@ -181,7 +191,75 @@ class BargainApp(App):
 
     def choose_pfp(self):
         filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
-        self.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
+        if len(filename) == 1:
+            self.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
+
+    def set_pfp(self):
+        filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
+        if len(filename) == 1:
+            result_pfp = app.client.set_pfp(
+                filename[0],
+                app.account["UID"],
+            )
+            if result_pfp:
+                Popup(
+                    title="Succesful PFP Change!",
+                    content=Label(text="PFP Change Successful!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+                self.root.get_screen("accountpage").ids.pfp.source = filename[0]
+            else:
+                Popup(
+                    title="Signup Error!",
+                    content=Label(text="Signup Error!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+
+    def signup(self):
+        result = app.client.new_account(
+            self.root.get_screen("signup").ids.signup_name_input.text,
+            self.root.get_screen("signup").ids.signup_username_input.text,
+            self.root.get_screen("signup").ids.signup_password_input.text,
+        )
+        if result:
+            result_uid = app.client.get_account_by_username(
+                self.root.get_screen("signup").ids.signup_username_input.text
+            )
+            if result_uid != None:
+                result_pfp = app.client.set_pfp(
+                    self.root.get_screen("signup").ids.selected_pfp_signup.source,
+                    result_uid["UID"],
+                )
+                if result_pfp:
+                    Popup(
+                        title="Succesful Signup!",
+                        content=Label(text="Successful Signup! Go Login Now."),
+                        size_hint=(None, None),
+                        size=(400, 400),
+                    ).open()
+                else:
+                    Popup(
+                        title="Signup Error!",
+                        content=Label(text="Signup Error!"),
+                        size_hint=(None, None),
+                        size=(400, 400),
+                    ).open()
+            else:
+                Popup(
+                    title="Signup Error!",
+                    content=Label(text="Signup Error!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+        else:
+            Popup(
+                title="Signup Error!",
+                content=Label(text="Username Taken or Signup Error!"),
+                size_hint=(None, None),
+                size=(400, 400),
+            ).open()
 
 
 app = BargainApp()
