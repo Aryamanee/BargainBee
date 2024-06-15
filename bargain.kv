@@ -1,9 +1,11 @@
 #:kivy 2.3.0
 
-WindowManager:
+WindowManager:    
     LogInScreen:
     SignUpScreen:
     AccountPage:
+    NewListingScreen:
+    MyListingsPage:
 
 <LogInScreen>:
     name: "login"
@@ -85,7 +87,6 @@ WindowManager:
         Label:
             id: hello_text
         Image:
-            source: "img/cpfp.png"
             fit_mode: "fill"
             id: pfp
         Button:
@@ -95,9 +96,81 @@ WindowManager:
             on_release: app.set_pfp()
         Button:
             text: "See My Listings"
+            on_release: 
+                app.populate_listings()
+                app.root.current = "listingspage"
+                root.manager.transition.direction = "right"
         Button:
             text: "Add Listing"
+            on_release:
+                app.root.current = "newlisting"
+                root.manager.transition.direction = "left"
         Button:
             text: "See Basket"
         Button:
             text: "See Messages"
+
+<NewListingScreen>:
+    name: "newlisting"
+    GridLayout:
+        rows: 3
+        cols: 1
+        Label:
+            text: "New Listing"
+        GridLayout:
+            rows: 1
+            cols: 2
+            Label:
+                text: "Selected Image:"
+            Image:
+                id: selected_image_new_listing
+                source: "img/placeholder_listing.png"
+                fit_mode: "fill"
+        GridLayout:
+            rows: 2
+            cols: 3
+            TextInput:
+                multiline: False
+                hint_text: "Name"
+                id: listing_name_input
+            TextInput:
+                multiline: False
+                hint_text: "Description"
+                id: listing_description_input
+            TextInput:
+                multiline: False
+                hint_text: "Price"
+                id: listing_price_input
+                input_filter: "int"
+            Button:
+                text: "Go Back"
+                on_release: 
+                    app.root.current = "accountpage"
+                    root.manager.transition.direction = "right"
+            Button:
+                text: "Create Listing"
+                on_release: app.new_listing()
+            Button:
+                text: "Chose\nListing\nPhoto"
+                on_release: app.choose_listing_photo()
+
+<MyListingsPage>:
+    name: "listingspage"
+    BoxLayout:
+        orientation: "vertical"
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: 1, 0.8
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                id: listings
+        Button:
+            text: "Go Back"
+            size_hint: 1, 0.2
+            on_release:
+                app.root.current = "accountpage"
+                root.manager.transition.direction = "left"
+                

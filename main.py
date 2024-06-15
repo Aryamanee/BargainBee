@@ -3,6 +3,7 @@ from kivy.config import Config
 Config.set("graphics", "resizable", "1")
 Config.set("graphics", "width", "360")
 Config.set("graphics", "height", "640")
+Config.set("input", "mouse", "mouse,disable_multitouch")
 
 import requests
 from kivy.app import App, Widget
@@ -11,6 +12,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 import plyer
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
+from kivy.uix.button import Button
+import os
 
 
 class Client:
@@ -29,6 +32,20 @@ class Client:
                 return resp.json()["successful"]
             else:
                 return False
+
+    def new_listing(self, name, desc, uid, price):
+        try:
+            resp = requests.get(
+                f"http://{self.server}/new_listing?name={name}&desc={desc}&uid={uid}&price={price}"
+            )
+        except requests.exceptions.ConnectionError:
+            return None
+        else:
+            if resp.status_code == 200:
+                print(resp.json())
+                return resp.json()["ID"]
+            else:
+                return None
 
     def get_account(self, uid):
         try:
@@ -62,6 +79,28 @@ class Client:
         else:
             if resp.status_code == 200:
                 return resp.content
+            else:
+                return None
+
+    def get_listing(self, id):
+        try:
+            resp = requests.get(f"http://{self.server}/get_listing?ID={id}")
+        except requests.exceptions.ConnectionError:
+            return None
+        else:
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return None
+
+    def get_listings(self, uid):
+        try:
+            resp = requests.get(f"http://{self.server}/get_listings?uid={uid}")
+        except requests.exceptions.ConnectionError:
+            return None
+        else:
+            if resp.status_code == 200:
+                return resp.json()
             else:
                 return None
 
@@ -144,6 +183,14 @@ class AccountPage(Screen):
     pass
 
 
+class NewListingScreen(Screen):
+    pass
+
+
+class MyListingsPage(Screen):
+    pass
+
+
 class WindowManager(ScreenManager):
     pass
 
@@ -171,7 +218,7 @@ class BargainApp(App):
                 self.root.get_screen("accountpage").ids.hello_text.text = (
                     "Hello, " + app.account["name"].split(" ")[0] + "!"
                 )
-                self.root.get_screen("accountpage").ids.pfp.reload()
+                self.root.get_screen("accountpage").ids.pfp.source = "img/cpfp.png"
                 app.root.current = "accountpage"
                 self.root.get_screen("login").manager.transition.direction = "up"
             else:
@@ -190,12 +237,16 @@ class BargainApp(App):
             ).open()
 
     def choose_pfp(self):
+        backup_cwd = os.getcwd()
         filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
+        os.chdir(backup_cwd)
         if len(filename) == 1:
             self.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
 
     def set_pfp(self):
+        backup_cwd = os.getcwd()
         filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
+        os.chdir(backup_cwd)
         if len(filename) == 1:
             result_pfp = app.client.set_pfp(
                 filename[0],
@@ -208,14 +259,29 @@ class BargainApp(App):
                     size_hint=(None, None),
                     size=(400, 400),
                 ).open()
+                print(os.getcwd())
+                curr_pfp = open("img/cpfp.png", "wb")
+                new_pfp = open(filename[0], "rb")
+                curr_pfp.write(new_pfp.read())
+                curr_pfp.close()
+                new_pfp.close()
                 self.root.get_screen("accountpage").ids.pfp.source = filename[0]
             else:
                 Popup(
-                    title="Signup Error!",
-                    content=Label(text="Signup Error!"),
+                    title="PFP Error!",
+                    content=Label(text="PFP Error!"),
                     size_hint=(None, None),
                     size=(400, 400),
                 ).open()
+
+    def choose_listing_photo(self):
+        backup_cwd = os.getcwd()
+        filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
+        os.chdir(backup_cwd)
+        if len(filename) == 1:
+            self.root.get_screen("newlisting").ids.selected_image_new_listing.source = (
+                filename[0]
+            )
 
     def signup(self):
         result = app.client.new_account(
@@ -260,6 +326,53 @@ class BargainApp(App):
                 size_hint=(None, None),
                 size=(400, 400),
             ).open()
+
+    def new_listing(self):
+        result = app.client.new_listing(
+            self.root.get_screen("newlisting").ids.listing_name_input.text,
+            self.root.get_screen("newlisting").ids.listing_description_input.text,
+            app.account["UID"],
+            int(self.root.get_screen("newlisting").ids.listing_price_input.text),
+        )
+
+        if result != None:
+            result_lp = app.client.set_listing_photo(
+                self.root.get_screen(
+                    "newlisting"
+                ).ids.selected_image_new_listing.source,
+                result,
+            )
+            if result_lp:
+                Popup(
+                    title="Listing Created!",
+                    content=Label(text="Congrats! Your Listing has been posted!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+            else:
+                Popup(
+                    title="Listing Error!",
+                    content=Label(text="Listing Error!"),
+                    size_hint=(None, None),
+                    size=(400, 400),
+                ).open()
+        else:
+            Popup(
+                title="Listing Error!",
+                content=Label(text="Listing Error!"),
+                size_hint=(None, None),
+                size=(400, 400),
+            ).open()
+
+    def populate_listings(self):
+        self.root.get_screen("listingspage").ids.listings.clear_widgets()
+        listings = app.client.get_listings(app.account["UID"])
+        print(listings)
+        for i in listings:
+            name = listings[i]["name"]
+            self.root.get_screen("listingspage").ids.listings.add_widget(
+                Button(text=name, size_hint_y=None, height=100)
+            )
 
 
 app = BargainApp()
