@@ -3,14 +3,17 @@
 WindowManager:    
     LogInScreen:
     SignUpScreen:
+    ChangeServerScreen:
     AccountPage:
     NewListingScreen:
     MyListingsPage:
+    ExplorePageOne:
+    ExplorePageTwo:
 
 <LogInScreen>:
     name: "login"
     GridLayout:
-        rows: 2
+        rows: 3
         cols: 1
         Label:
             text: "Log In"
@@ -34,6 +37,11 @@ WindowManager:
                 on_release: 
                     app.root.current = "signup"
                     root.manager.transition.direction = "left"
+        Button:
+            text: "Change Sever"
+            on_release: 
+                app.root.current = "changeserver"
+                root.manager.transition.direction = "right"
 
 <SignUpScreen>:
     name: "signup"
@@ -79,6 +87,29 @@ WindowManager:
                 text: "Chose PFP"
                 on_release: app.choose_pfp()
 
+<ChangeServerScreen>:
+    name: "changeserver"
+    GridLayout:
+        rows: 2
+        cols: 1
+        TextInput:
+            id: hostname_input
+            text: app.get_server()
+        GridLayout:
+            rows: 1
+            cols: 2
+            Button:
+                text: "Set Server"
+                on_release: app.set_server()
+            Button:
+                text: "Go Back"
+                on_release: 
+                    app.root.current = "login"
+                    root.manager.transition.direction = "left"
+
+        
+
+
 <AccountPage>:
     name: "accountpage"
     GridLayout:
@@ -91,6 +122,10 @@ WindowManager:
             id: pfp
         Button:
             text: "Explore Page"
+            on_release:
+                root.manager.prepare()
+                app.root.current = "explore1"
+                root.manager.transition.direction = "up"
         Button:
             text: "Set PFP"
             on_release: app.set_pfp()
@@ -173,4 +208,73 @@ WindowManager:
             on_release:
                 app.root.current = "accountpage"
                 root.manager.transition.direction = "left"
-                
+
+<ExplorePageOne>:
+    name: "explore1"
+    BoxLayout:
+        orientation: "horizontal"
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 0.7, 1
+            AsyncImage:
+                id: image
+                size_hint: 1, 0.7
+                fit_mode: "fill"
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                size_hint: 1, 0.3
+                Label:
+                    id: name
+                    size_hint_y: None
+                    text_size: self.width, None
+                    height: self.texture_size[1]
+        GridLayout:
+            cols: 1
+            rows: 3
+            size_hint: 0.3, 1
+            Button:
+                text: "Go Back"
+                on_release:
+                    app.root.current = "accountpage"
+                    root.manager.transition.direction = "left"
+            Button:
+                text: "Add To Basket"
+                on_release: app.add_to_basket()
+            Button:
+                text: "Message Seller"
+
+
+<ExplorePageTwo>:
+    name: "explore2"
+    BoxLayout:
+        orientation: "horizontal"
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: 0.7, 1
+            AsyncImage:
+                id: image
+                size_hint: 1, 0.7
+                fit_mode: "fill"
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                size_hint: 1, 0.3
+                Label:
+                    id: name
+                    size_hint_y: None
+                    text_size: self.width, None
+                    height: self.texture_size[1]
+        GridLayout:
+            cols: 1
+            rows: 3
+            size_hint: 0.3, 1
+            Button:
+                text: "Go Back"
+                on_release:
+                    app.root.current = "accountpage"
+                    root.manager.transition.direction = "left"
+            Button:
+                text: "Add To Basket"
+            Button:
+                text: "Message Seller"

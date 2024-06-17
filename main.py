@@ -14,6 +14,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 import os
+import time
 
 
 class Client:
@@ -42,7 +43,6 @@ class Client:
             return None
         else:
             if resp.status_code == 200:
-                print(resp.json())
                 return resp.json()["ID"]
             else:
                 return None
@@ -170,12 +170,75 @@ class Client:
             else:
                 return resp.json()
 
+    def get_next_listing(self, uid):
+        try:
+            resp = requests.get(f"http://{self.server}/get_next_listing?uid={uid}")
+        except requests.exceptions.ConnectionError:
+            return None
+        else:
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return None
+
+    def set_view_duration(self, uid, id, duration):
+        try:
+            resp = requests.post(
+                f"http://{self.server}/set_view_duration?uid={uid}&id={id}&duration={duration}"
+            )
+        except requests.exceptions.ConnectionError:
+            return False
+        else:
+            if resp.status_code == 200:
+                return True
+            else:
+                return False
+
+    def get_basket(self, uid):
+        try:
+            resp = requests.get(f"http://{self.server}/get_basket?uid={uid}")
+        except requests.exceptions.ConnectionError:
+            return None
+        else:
+            if resp.status_code == 200:
+                return resp.json()
+            else:
+                return None
+
+    def add_to_basket(self, uid, id):
+        try:
+            resp = requests.get(f"http://{self.server}/add_to_basket?uid={uid}&id={id}")
+        except requests.exceptions.ConnectionError:
+            return False
+        else:
+            if resp.status_code == 200:
+                return True
+            else:
+                return False
+
+    def remove_from_basket(self, uid, id):
+        try:
+            resp = requests.get(
+                f"http://{self.server}/remove_from_basket?uid={uid}&id={id}"
+            )
+        except requests.exceptions.ConnectionError:
+            return False
+        else:
+            if resp.status_code == 200:
+                return True
+            else:
+                return False
+
 
 class LogInScreen(Screen):
     pass
 
 
 class SignUpScreen(Screen):
+    pass
+
+
+class ChangeServerScreen(Screen):
     pass
 
 
@@ -191,13 +254,178 @@ class MyListingsPage(Screen):
     pass
 
 
-class WindowManager(ScreenManager):
+class ExplorePageOne(Screen):
     pass
 
 
+class ExplorePageTwo(Screen):
+    pass
+
+
+class WindowManager(ScreenManager):
+    swipe_threshold = 100
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.page1 = True
+        self.touch_start_y = 0
+        self.history = []
+        self.current_listing = 0
+        self.start_view = 0
+
+    def prepare(self):
+        self.history.append(app.client.get_next_listing(app.account["UID"]))
+        self.start_view = time.time()
+        lID = self.history[self.current_listing]["ID"]
+        self.get_screen("explore1").ids.name.text = (
+            "Title: "
+            + self.history[self.current_listing]["name"]
+            + "\nDescription: "
+            + self.history[self.current_listing]["desc"]
+            + "\nPrice: $"
+            + str(self.history[self.current_listing]["price"])
+            + "\nSeller: "
+            + app.client.get_account(self.history[self.current_listing]["UID"])["name"]
+        )
+        self.get_screen("explore1").ids.image.source = (
+            f"http://{app.client.server}/get_listing_photo?id={lID}"
+        )
+        self.current = "explore1"
+
+    def on_touch_down(self, touch):
+        self.touch_start_y = touch.y
+        return super().on_touch_down(touch)
+
+    def on_touch_up(self, touch):
+        if self.touch_start_y >= self.height * 0.3:
+            if touch.y - self.touch_start_y < -self.swipe_threshold:
+                self.previous_screen()
+            elif touch.y - self.touch_start_y > self.swipe_threshold:
+                self.next_screen()
+            return super().on_touch_up(touch)
+
+    def next_screen(self):
+        app.client.set_view_duration(
+            app.account["UID"],
+            self.history[self.current_listing]["ID"],
+            time.time() - self.start_view,
+        )
+        self.start_view = time.time()
+        self.current_listing += 1
+        if self.current_listing == len(self.history):
+            self.history.append(app.client.get_next_listing(app.account["UID"]))
+        self.page1 = not self.page1
+        lID = self.history[self.current_listing]["ID"]
+        if self.page1:
+            self.get_screen("explore1").ids.name.text = self.get_screen(
+                "explore1"
+            ).ids.name.text = (
+                "Title: "
+                + self.history[self.current_listing]["name"]
+                + "\nDescription: "
+                + self.history[self.current_listing]["desc"]
+                + "\nPrice: $"
+                + str(self.history[self.current_listing]["price"])
+                + "\nSeller: "
+                + app.client.get_account(self.history[self.current_listing]["UID"])[
+                    "name"
+                ]
+            )
+            self.get_screen("explore1").ids.image.source = (
+                f"http://{app.client.server}/get_listing_photo?id={lID}"
+            )
+            self.current = "explore1"
+        else:
+            self.get_screen("explore2").ids.name.text = self.get_screen(
+                "explore1"
+            ).ids.name.text = (
+                "Title: "
+                + self.history[self.current_listing]["name"]
+                + "\nDescription: "
+                + self.history[self.current_listing]["desc"]
+                + "\nPrice: $"
+                + str(self.history[self.current_listing]["price"])
+                + "\nSeller: "
+                + app.client.get_account(self.history[self.current_listing]["UID"])[
+                    "name"
+                ]
+            )
+            self.get_screen("explore2").ids.image.source = (
+                f"http://{app.client.server}/get_listing_photo?id={lID}"
+            )
+            self.current = "explore2"
+        self.transition.direction = "up"
+
+    def previous_screen(self):
+        if self.current_listing > 0:
+            app.client.set_view_duration(
+                app.account["UID"],
+                self.history[self.current_listing]["ID"],
+                time.time() - self.start_view,
+            )
+            self.start_view = time.time()
+            self.current_listing -= 1
+            self.page1 = not self.page1
+            lID = self.history[self.current_listing]["ID"]
+            if self.page1:
+                self.get_screen("explore1").ids.name.text = self.get_screen(
+                    "explore1"
+                ).ids.name.text = (
+                    "Title: "
+                    + self.history[self.current_listing]["name"]
+                    + "\nDescription: "
+                    + self.history[self.current_listing]["desc"]
+                    + "\nPrice: $"
+                    + str(self.history[self.current_listing]["price"])
+                    + "\nSeller: "
+                    + app.client.get_account(self.history[self.current_listing]["UID"])[
+                        "name"
+                    ]
+                )
+                self.get_screen("explore1").ids.image.source = (
+                    f"http://{app.client.server}/get_listing_photo?id={lID}"
+                )
+                self.current = "explore1"
+            else:
+                self.get_screen("explore2").ids.name.text = self.get_screen(
+                    "explore1"
+                ).ids.name.text = (
+                    "Title: "
+                    + self.history[self.current_listing]["name"]
+                    + "\nDescription: "
+                    + self.history[self.current_listing]["desc"]
+                    + "\nPrice: $"
+                    + str(self.history[self.current_listing]["price"])
+                    + "\nSeller: "
+                    + app.client.get_account(self.history[self.current_listing]["UID"])[
+                        "name"
+                    ]
+                )
+                self.get_screen("explore2").ids.image.source = (
+                    f"http://{app.client.server}/get_listing_photo?id={lID}"
+                )
+                self.current = "explore2"
+            self.transition.direction = "down"
+
+
 class BargainApp(App):
-    client = Client("localhost:8000")
+    hostname_file = open("prefs/server.txt", "r")
+    client = Client(hostname_file.read())
+    hostname_file.close()
     account = None
+
+    def get_server(self):
+        hostname_file = open("prefs/server.txt", "r")
+        hostname = hostname_file.read()
+        hostname_file.close()
+        return hostname
+
+    def set_server(self):
+        hostname = self.root.get_screen("changeserver").ids.hostname_input.text
+        hostname_file = open("prefs/server.txt", "w")
+        hostname_file.write(hostname)
+        hostname_file.close()
+        app.client.server = hostname
 
     def build(self):
         return Builder.load_file("bargain.kv")
@@ -259,7 +487,6 @@ class BargainApp(App):
                     size_hint=(None, None),
                     size=(400, 400),
                 ).open()
-                print(os.getcwd())
                 curr_pfp = open("img/cpfp.png", "wb")
                 new_pfp = open(filename[0], "rb")
                 curr_pfp.write(new_pfp.read())
@@ -367,12 +594,24 @@ class BargainApp(App):
     def populate_listings(self):
         self.root.get_screen("listingspage").ids.listings.clear_widgets()
         listings = app.client.get_listings(app.account["UID"])
-        print(listings)
-        for i in listings:
-            name = listings[i]["name"]
-            self.root.get_screen("listingspage").ids.listings.add_widget(
-                Button(text=name, size_hint_y=None, height=100)
-            )
+        if listings != None:
+            for i in listings:
+                name = listings[i]["name"]
+                self.root.get_screen("listingspage").ids.listings.add_widget(
+                    Button(text=name, size_hint_y=None, height=100)
+                )
+        else:
+            Popup(
+                title="Error Loading Listings!",
+                content=Label(text="Error Loading Listings!"),
+                size_hint=(None, None),
+                size=(400, 400),
+            ).open()
+
+    def add_to_basket(self):
+        app.client.add_to_basket(
+            self.account["UID"], app.root.history[app.root.current_listing]["ID"]
+        )
 
 
 app = BargainApp()
