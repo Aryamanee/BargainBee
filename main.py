@@ -13,6 +13,7 @@ import plyer
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
 import os
 import time
 
@@ -84,7 +85,7 @@ class Client:
 
     def get_listing(self, id):
         try:
-            resp = requests.get(f"http://{self.server}/get_listing?ID={id}")
+            resp = requests.get(f"http://{self.server}/get_listing?id={id}")
         except requests.exceptions.ConnectionError:
             return None
         else:
@@ -254,6 +255,10 @@ class MyListingsPage(Screen):
     pass
 
 
+class BasketPage(Screen):
+    pass
+
+
 class ExplorePageOne(Screen):
     pass
 
@@ -270,10 +275,12 @@ class WindowManager(ScreenManager):
         self.page1 = True
         self.touch_start_y = 0
         self.history = []
-        self.current_listing = 0
+        self.current_listing = -1
         self.start_view = 0
 
     def prepare(self):
+        self.current_listing += 1
+        self.page1 = True
         self.history.append(app.client.get_next_listing(app.account["UID"]))
         self.start_view = time.time()
         lID = self.history[self.current_listing]["ID"]
@@ -290,19 +297,19 @@ class WindowManager(ScreenManager):
         self.get_screen("explore1").ids.image.source = (
             f"http://{app.client.server}/get_listing_photo?id={lID}"
         )
-        self.current = "explore1"
 
     def on_touch_down(self, touch):
         self.touch_start_y = touch.y
         return super().on_touch_down(touch)
 
     def on_touch_up(self, touch):
-        if self.touch_start_y >= self.height * 0.3:
-            if touch.y - self.touch_start_y < -self.swipe_threshold:
-                self.previous_screen()
-            elif touch.y - self.touch_start_y > self.swipe_threshold:
-                self.next_screen()
-            return super().on_touch_up(touch)
+        if self.current == "explore1" or self.current == "explore2":
+            if self.touch_start_y >= self.height * 0.3:
+                if touch.y - self.touch_start_y < -self.swipe_threshold:
+                    self.previous_screen()
+                elif touch.y - self.touch_start_y > self.swipe_threshold:
+                    self.next_screen()
+                return super().on_touch_up(touch)
 
     def next_screen(self):
         app.client.set_view_duration(
@@ -421,7 +428,7 @@ class BargainApp(App):
         return hostname
 
     def set_server(self):
-        hostname = self.root.get_screen("changeserver").ids.hostname_input.text
+        hostname = app.root.get_screen("changeserver").ids.hostname_input.text
         hostname_file = open("prefs/server.txt", "w")
         hostname_file.write(hostname)
         hostname_file.close()
@@ -432,23 +439,23 @@ class BargainApp(App):
 
     def login(self):
         loginstat = self.client.login(
-            self.root.get_screen("login").ids.login_username_input.text,
-            self.root.get_screen("login").ids.login_password_input.text,
+            app.root.get_screen("login").ids.login_username_input.text,
+            app.root.get_screen("login").ids.login_password_input.text,
         )
         if loginstat["username"]:
             if loginstat["password"]:
                 app.account = app.client.get_account_by_username(
-                    self.root.get_screen("login").ids.login_username_input.text
+                    app.root.get_screen("login").ids.login_username_input.text
                 )
                 curr_pfp = open("img/cpfp.png", "wb")
                 curr_pfp.write(app.client.get_pfp(app.account["UID"]))
                 curr_pfp.close()
-                self.root.get_screen("accountpage").ids.hello_text.text = (
+                app.root.get_screen("accountpage").ids.hello_text.text = (
                     "Hello, " + app.account["name"].split(" ")[0] + "!"
                 )
-                self.root.get_screen("accountpage").ids.pfp.source = "img/cpfp.png"
+                app.root.get_screen("accountpage").ids.pfp.source = "img/cpfp.png"
                 app.root.current = "accountpage"
-                self.root.get_screen("login").manager.transition.direction = "up"
+                app.root.get_screen("login").manager.transition.direction = "up"
             else:
                 Popup(
                     title="Incorrect Password!",
@@ -469,7 +476,7 @@ class BargainApp(App):
         filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
         os.chdir(backup_cwd)
         if len(filename) == 1:
-            self.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
+            app.root.get_screen("signup").ids.selected_pfp_signup.source = filename[0]
 
     def set_pfp(self):
         backup_cwd = os.getcwd()
@@ -492,7 +499,7 @@ class BargainApp(App):
                 curr_pfp.write(new_pfp.read())
                 curr_pfp.close()
                 new_pfp.close()
-                self.root.get_screen("accountpage").ids.pfp.source = filename[0]
+                app.root.get_screen("accountpage").ids.pfp.source = filename[0]
             else:
                 Popup(
                     title="PFP Error!",
@@ -506,23 +513,23 @@ class BargainApp(App):
         filename = plyer.filechooser.open_file(filters=["*png"], multiple=False)
         os.chdir(backup_cwd)
         if len(filename) == 1:
-            self.root.get_screen("newlisting").ids.selected_image_new_listing.source = (
+            app.root.get_screen("newlisting").ids.selected_image_new_listing.source = (
                 filename[0]
             )
 
     def signup(self):
         result = app.client.new_account(
-            self.root.get_screen("signup").ids.signup_name_input.text,
-            self.root.get_screen("signup").ids.signup_username_input.text,
-            self.root.get_screen("signup").ids.signup_password_input.text,
+            app.root.get_screen("signup").ids.signup_name_input.text,
+            app.root.get_screen("signup").ids.signup_username_input.text,
+            app.root.get_screen("signup").ids.signup_password_input.text,
         )
         if result:
             result_uid = app.client.get_account_by_username(
-                self.root.get_screen("signup").ids.signup_username_input.text
+                app.root.get_screen("signup").ids.signup_username_input.text
             )
             if result_uid != None:
                 result_pfp = app.client.set_pfp(
-                    self.root.get_screen("signup").ids.selected_pfp_signup.source,
+                    app.root.get_screen("signup").ids.selected_pfp_signup.source,
                     result_uid["UID"],
                 )
                 if result_pfp:
@@ -556,17 +563,15 @@ class BargainApp(App):
 
     def new_listing(self):
         result = app.client.new_listing(
-            self.root.get_screen("newlisting").ids.listing_name_input.text,
-            self.root.get_screen("newlisting").ids.listing_description_input.text,
+            app.root.get_screen("newlisting").ids.listing_name_input.text,
+            app.root.get_screen("newlisting").ids.listing_description_input.text,
             app.account["UID"],
-            int(self.root.get_screen("newlisting").ids.listing_price_input.text),
+            int(app.root.get_screen("newlisting").ids.listing_price_input.text),
         )
 
         if result != None:
             result_lp = app.client.set_listing_photo(
-                self.root.get_screen(
-                    "newlisting"
-                ).ids.selected_image_new_listing.source,
+                app.root.get_screen("newlisting").ids.selected_image_new_listing.source,
                 result,
             )
             if result_lp:
@@ -591,15 +596,41 @@ class BargainApp(App):
                 size=(400, 400),
             ).open()
 
+    def view_listing(self, id):
+        app.root.current_listing += 1
+        app.root.page1 = True
+        app.root.history.append(app.client.get_listing(id))
+        app.root.start_view = time.time()
+        app.root.get_screen("explore1").ids.name.text = (
+            "Title: "
+            + app.root.history[app.root.current_listing]["name"]
+            + "\nDescription: "
+            + app.root.history[app.root.current_listing]["desc"]
+            + "\nPrice: $"
+            + str(app.root.history[app.root.current_listing]["price"])
+            + "\nSeller: "
+            + app.client.get_account(app.root.history[app.root.current_listing]["UID"])[
+                "name"
+            ]
+        )
+        app.root.get_screen("explore1").ids.image.source = (
+            f"http://{app.client.server}/get_listing_photo?id={id}"
+        )
+        app.root.current = "explore1"
+        app.root.transition.direction = "down"
+
     def populate_listings(self):
-        self.root.get_screen("listingspage").ids.listings.clear_widgets()
+        app.root.get_screen("listingspage").ids.listings.clear_widgets()
         listings = app.client.get_listings(app.account["UID"])
         if listings != None:
             for i in listings:
+                curr_id = listings[i]["ID"]
                 name = listings[i]["name"]
-                self.root.get_screen("listingspage").ids.listings.add_widget(
-                    Button(text=name, size_hint_y=None, height=100)
+                button_name = Button(text=name, size_hint_y=None, height=100)
+                button_name.bind(
+                    on_release=lambda view, curr_id=curr_id: app.view_listing(curr_id)
                 )
+                app.root.get_screen("listingspage").ids.listings.add_widget(button_name)
         else:
             Popup(
                 title="Error Loading Listings!",
@@ -612,6 +643,39 @@ class BargainApp(App):
         app.client.add_to_basket(
             self.account["UID"], app.root.history[app.root.current_listing]["ID"]
         )
+
+    def remove_from_basket(self, id):
+        app.client.remove_from_basket(app.account["UID"], id)
+        app.populate_basket()
+
+    def populate_basket(self):
+        app.root.get_screen("basketpage").ids.listings.clear_widgets()
+        listings = app.client.get_basket(app.account["UID"])
+        if listings != None:
+            for i in listings:
+                name = listings[i]["name"]
+                layout = GridLayout(rows=1, cols=2, size_hint_y=None, height=100)
+                button_name = Button(text=name, size_hint_y=None, height=100)
+                button_delete = Button(text="Remove")
+                curr_id = listings[i]["ID"]
+                button_name.bind(
+                    on_release=lambda view, curr_id=curr_id: app.view_listing(curr_id)
+                )
+                button_delete.bind(
+                    on_release=lambda delete, curr_id=curr_id: app.remove_from_basket(
+                        curr_id
+                    )
+                )
+                layout.add_widget(button_name)
+                layout.add_widget(button_delete)
+                app.root.get_screen("basketpage").ids.listings.add_widget(layout)
+        else:
+            Popup(
+                title="Error Loading Basket!",
+                content=Label(text="Error Loading Basket!"),
+                size_hint=(None, None),
+                size=(400, 400),
+            ).open()
 
 
 app = BargainApp()

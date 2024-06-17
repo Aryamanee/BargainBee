@@ -9,6 +9,7 @@ WindowManager:
     MyListingsPage:
     ExplorePageOne:
     ExplorePageTwo:
+    BasketPage:
 
 <LogInScreen>:
     name: "login"
@@ -125,7 +126,7 @@ WindowManager:
             on_release:
                 root.manager.prepare()
                 app.root.current = "explore1"
-                root.manager.transition.direction = "up"
+                root.manager.transition.direction = "down"
         Button:
             text: "Set PFP"
             on_release: app.set_pfp()
@@ -142,6 +143,10 @@ WindowManager:
                 root.manager.transition.direction = "left"
         Button:
             text: "See Basket"
+            on_release:
+                app.populate_basket()
+                app.root.current = "basketpage"
+                root.manager.transition.direction = "up"
         Button:
             text: "See Messages"
 
@@ -237,7 +242,7 @@ WindowManager:
                 text: "Go Back"
                 on_release:
                     app.root.current = "accountpage"
-                    root.manager.transition.direction = "left"
+                    root.manager.transition.direction = "up"
             Button:
                 text: "Add To Basket"
                 on_release: app.add_to_basket()
@@ -273,8 +278,28 @@ WindowManager:
                 text: "Go Back"
                 on_release:
                     app.root.current = "accountpage"
-                    root.manager.transition.direction = "left"
+                    root.manager.transition.direction = "up"
             Button:
                 text: "Add To Basket"
             Button:
                 text: "Message Seller"
+
+<BasketPage>:
+    name: "basketpage"
+    BoxLayout:
+        orientation: "vertical"
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: 1, 0.8
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                id: listings
+        Button:
+            text: "Go Back"
+            size_hint: 1, 0.2
+            on_release:
+                app.root.current = "accountpage"
+                root.manager.transition.direction = "down"
