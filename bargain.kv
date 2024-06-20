@@ -10,6 +10,8 @@ WindowManager:
     ExplorePageOne:
     ExplorePageTwo:
     BasketPage:
+    ChatsScreen:
+    MessageScreen:
 
 <LogInScreen>:
     name: "login"
@@ -85,7 +87,7 @@ WindowManager:
                 text: "Sign Up"
                 on_release: app.signup()
             Button:
-                text: "Chose PFP"
+                text: "Choose PFP"
                 on_release: app.choose_pfp()
 
 <ChangeServerScreen>:
@@ -149,6 +151,10 @@ WindowManager:
                 root.manager.transition.direction = "up"
         Button:
             text: "See Messages"
+            on_release:
+                app.populate_messages()
+                app.root.current = "chatsscreen"
+                root.manager.transition.direction = "up"
 
 <NewListingScreen>:
     name: "newlisting"
@@ -191,7 +197,7 @@ WindowManager:
                 text: "Create Listing"
                 on_release: app.new_listing()
             Button:
-                text: "Chose\nListing\nPhoto"
+                text: "Choose\nListing\nPhoto"
                 on_release: app.choose_listing_photo()
 
 <MyListingsPage>:
@@ -248,6 +254,7 @@ WindowManager:
                 on_release: app.add_to_basket()
             Button:
                 text: "Message Seller"
+                on_release: app.message_seller()
 
 
 <ExplorePageTwo>:
@@ -283,6 +290,7 @@ WindowManager:
                 text: "Add To Basket"
             Button:
                 text: "Message Seller"
+                on_release: app.message_seller()
 
 <BasketPage>:
     name: "basketpage"
@@ -303,3 +311,65 @@ WindowManager:
             on_release:
                 app.root.current = "accountpage"
                 root.manager.transition.direction = "down"
+
+<ChatsScreen>:
+    name: "chatsscreen"
+    BoxLayout:
+        orientation: "vertical"
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: 1, 0.8
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                id: chats
+        Button:
+            text: "Go Back"
+            size_hint: 1, 0.2
+            on_release:
+                app.root.current = "accountpage"
+                root.manager.transition.direction = "down"
+        
+<MessageScreen>:
+    name: "messagescreen"
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            id: name
+            size_hint: 1, 0.1
+        
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: 1, 0.7
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                id: messages
+        
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: 1, 0.1
+            TextInput:
+                size_hint: 0.7, 1
+                id: new_message
+
+            Button:
+                text: "Send"
+                size_hint: 0.3, 1
+                on_release:
+                    app.send_message()
+        
+        Button:
+            text: "Go Back"
+            size_hint: 1, 0.1
+            on_release:
+                app.root.current = "chatsscreen"
+                app.root.transition.direction = "down"
+
+
+
+        
